@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flag Plant Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Load Web Components -->
+    <script src="./js/components/DashboardComponent.js" defer></script>
+</head>
+<body>
+    <header>
+        <h1>Flag Planting - Groep 14</h1>
+    </header>
+
+    <main>
+        <!-- Using a Web Component (Blok 4 Requirement) -->
+        <plant-dashboard title="Arduino Status"></plant-dashboard>
+        
+        <div class="controls">
+            <button id="actionBtn">Start Measurement</button>
+        </div>
+    </main>
+
+    <script src="./js/app.js" type="module"></script>
+</body>
+</html>
