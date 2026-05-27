@@ -3,25 +3,54 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Flag Plant Dashboard</title>
+    <title>AAAdlander Command Center</title>
     <link rel="stylesheet" href="style.css">
-    <!-- Load Web Components -->
-    <script src="./js/components/DashboardComponent.js" defer></script>
 </head>
 <body>
-    <header>
-        <h1>Flag Planting - Groep 14</h1>
+    <div class="space-bg" aria-hidden="true"></div>
+
+    <header class="main-header">
+        <div class="aasa-logo" aria-label="AASA logo">AASA</div>
+        <p class="top-label">Blok 4 · Interdisciplinair Project</p>
+        <h1>AAAdlander Command Center</h1>
+        <p class="subtitle">Module 4 - Vlag Planten</p>
     </header>
 
-    <main>
-        <!-- Using a Web Component (Blok 4 Requirement) -->
-        <plant-dashboard title="Arduino Status"></plant-dashboard>
-        
-        <div class="controls">
-            <button id="actionBtn">Start Measurement</button>
-        </div>
+    <main class="page-layout">
+        <section class="mission-card">
+            <div class="mission-text">
+                <p class="section-label">Mission Control</p>
+                <h2>Flag Planting Dashboard</h2>
+                <p>
+                    This dashboard shows the module status, distance measurements and plant permission.
+                    The flag command is only allowed after five valid measurements.
+                </p>
+            </div>
+
+            <div class="orbit-loader" aria-hidden="true">
+                <div class="orbit"></div>
+                <div class="planet-core"></div>
+            </div>
+        </section>
+
+        <plant-dashboard></plant-dashboard>
+
+        <section class="controls-panel">
+            <p class="section-label">Command Panel</p>
+            <h2>Module Commands</h2>
+
+            <div class="controls">
+                <button id="btn-start" class="btn btn-primary" type="button">Start Measurement</button>
+                <button id="btn-plant" class="btn btn-success" type="button">Plant Flag</button>
+                <button id="btn-reset" class="btn btn-danger" type="button">Reset</button>
+            </div>
+        </section>
     </main>
 
-    <script src="./js/app.js" type="module"></script>
+    <footer class="footer">
+        <p>AAAdlander · Module 4 · Vlag Planten</p>
+    </footer>
+
+    <script src="app.js" type="module"></script>
 </body>
 </html>
