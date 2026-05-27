@@ -2,51 +2,60 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>AAAdlander Command Center</title>
+
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="space-bg" aria-hidden="true"></div>
+
+    <!-- Full screen animated space background -->
+    <div class="space-loader" aria-hidden="true">
+        <div class="space-environment">
+            <div class="stars-container">
+                <div class="stars stars-near"></div>
+                <div class="stars stars-mid"></div>
+                <div class="stars stars-far"></div>
+            </div>
+
+            <div class="meteors">
+                <div class="meteor meteor-1"></div>
+                <div class="meteor meteor-2"></div>
+                <div class="meteor meteor-3"></div>
+            </div>
+        </div>
+    </div>
 
     <header class="main-header">
-        <div class="aasa-logo" aria-label="AASA logo">AASA</div>
-        <p class="top-label">Blok 4 · Interdisciplinair Project</p>
-        <h1>AAAdlander Command Center</h1>
-        <p class="subtitle">Module 4 - Vlag Planten</p>
+        <div class="logo-wrapper">
+            <img src="assets/aasa-logo.png" alt="AASA logo" class="aasa-logo">
+        </div>
+
+        <div class="header-text">
+            <p class="top-label">Blok 4 · Interdisciplinair Project</p>
+            <h1>AAAdlander Command Center</h1>
+            <p class="subtitle">Module 4 - Vlag Planten</p>
+        </div>
     </header>
 
-  <!-- Full Screen Space Background -->
-  <div class="space-background">
-    <div class="space-environment">
-      <div class="stars-container">
-        <div class="stars stars-near"></div>
-        <div class="stars stars-mid"></div>
-        <div class="stars stars-far"></div>
-      </div>
-
-      <div class="meteors">
-        <div class="meteor meteor-1"></div>
-        <div class="meteor meteor-2"></div>
-        <div class="meteor meteor-3"></div>
-      </div>
-    </div>
-  </div>  
-
     <main class="page-layout">
+
         <section class="mission-card">
             <div class="mission-text">
                 <p class="section-label">Mission Control</p>
                 <h2>Flag Planting Dashboard</h2>
                 <p>
-                    This dashboard shows the module status, distance measurements and plant permission.
-                    The flag command is only allowed after five valid measurements.
+                    This dashboard shows live distance measurements, module status,
+                    command status and plant permission. The flag may only be planted
+                    after five valid distance measurements.
                 </p>
             </div>
 
-            <div class="orbit-loader" aria-hidden="true">
-                <div class="orbit"></div>
-                <div class="planet-core"></div>
+            <div class="mission-status">
+                <span class="mission-dot"></span>
+                Azure Hosted Webapp
             </div>
         </section>
 
@@ -62,12 +71,15 @@
                 <button id="btn-reset" class="btn btn-danger" type="button">Reset</button>
             </div>
         </section>
+
     </main>
 
     <footer class="footer">
         <p>AAAdlander · Module 4 · Vlag Planten</p>
     </footer>
 
-    <script src="app.js" type="module"></script>
+    <!-- Important: because app.js is inside the js folder -->
+    <script src="js/app.js" type="module"></script>
+
 </body>
 </html>

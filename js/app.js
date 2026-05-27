@@ -1,9 +1,9 @@
 // AAAdlander Command Center - Main Application
 
-import { Measurement } from "./Measurement.js";
-import { sendCommand } from "./apiService.js";
-import { connectSocket } from "./socketService.js";
-import "./Dashboard.js";
+import { Measurement } from "./models/Measurement.js";
+import { sendCommand } from "./services/apiService.js";
+import { connectSocket } from "./services/socketService.js";
+import "./components/Dashboard.js";
 
 // Configuration
 // Local example: "ws://localhost:8080"

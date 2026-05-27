@@ -1,45 +1,52 @@
-// API Service for REST Commands
 const API_BASE_URL = "";
 
 export async function sendCommand(commandName, payload = {}) {
     const command = {
         name: commandName,
-        timestamp: new Date().toISOString(),
-        ...payload
+        payload: payload,
+        timestamp: new Date().toISOString()
     };
 
     console.log("[API] Sending command:", command);
 
-    if (!API_BASE_URL || API_BASE_URL === "") {
-        // Mock response
-        console.log("[API] No API_BASE_URL configured. Using mock response.");
+    if (!API_BASE_URL) {
+        console.log("[MOCK API] No API_BASE_URL configured. Mock command used.");
+
         return {
             success: true,
-            message: `Mock: ${commandName} sent successfully`,
+            mode: "mock",
+            message: `Mock command ${commandName} sent successfully.`,
             command: command
         };
     }
 
     try {
         const response = await fetch(`${API_BASE_URL}/command`, {
-            method: 'POST',
+            method: "POST",
             headers: {
-                'Content-Type': 'application/json'
+                "Content-Type": "application/json"
             },
             body: JSON.stringify(command)
         });
 
+        const responseData = await response.json().catch(() => ({}));
+
         if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            throw new Error(responseData.message || `HTTP error: ${response.status}`);
         }
 
-        const data = await response.json();
-        console.log("[API] Response:", data);
-        return data;
+        return {
+            success: true,
+            mode: "real-api",
+            data: responseData
+        };
+
     } catch (error) {
-        console.error("[API] Error:", error);
+        console.error("[API] Service error:", error);
+
         return {
             success: false,
+            mode: "real-api",
             message: error.message,
             command: command
         };
