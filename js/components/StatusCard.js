@@ -4,16 +4,12 @@ class StatusCard extends HTMLElement {
         this.attachShadow({ mode: 'open' });
     }
 
-    // Tell the component to listen for changes to these attributes
     static get observedAttributes() {
         return ['title', 'value', 'text', 'highlight'];
     }
 
-    // When Dashboard.js updates the data, re-render the card
     attributeChangedCallback(name, oldValue, newValue) {
-        if (oldValue !== newValue) {
-            this.render();
-        }
+        if (oldValue !== newValue) this.render();
     }
 
     connectedCallback() {
@@ -24,13 +20,17 @@ class StatusCard extends HTMLElement {
         const title = this.getAttribute('title') || 'Unknown';
         const value = this.getAttribute('value') || '--';
         const text = this.getAttribute('text') || '';
-        const highlight = this.getAttribute('highlight') || 'none'; // none, success, danger
+        const highlight = this.getAttribute('highlight') || 'none';
         
         this.shadowRoot.innerHTML = `
             <style>
+                /* THIS FIXES THE OVERLAPPING */
+                * { box-sizing: border-box; }
+                
                 :host {
                     display: block;
                     width: 100%;
+                    height: 100%;
                 }
                 .card {
                     background: rgba(255, 255, 255, 0.03);
@@ -43,9 +43,7 @@ class StatusCard extends HTMLElement {
                     justify-content: center;
                     transition: background 0.3s ease;
                 }
-                .card:hover {
-                    background: rgba(255, 255, 255, 0.06);
-                }
+                .card:hover { background: rgba(255, 255, 255, 0.06); }
                 .title {
                     color: #9ca3af;
                     font-size: 0.75rem;
@@ -61,12 +59,8 @@ class StatusCard extends HTMLElement {
                     margin-bottom: 0.25rem;
                     word-break: break-word;
                 }
-                .text {
-                    color: #6b7280;
-                    font-size: 0.85rem;
-                }
+                .text { color: #6b7280; font-size: 0.85rem; }
                 
-                /* Dynamic coloring based on status */
                 .highlight-success .value { color: #4ade80; }
                 .highlight-danger .value { color: #f87171; }
             </style>
@@ -78,5 +72,4 @@ class StatusCard extends HTMLElement {
         `;
     }
 }
-
 customElements.define('status-card', StatusCard);
