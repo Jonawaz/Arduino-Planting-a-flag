@@ -1,24 +1,20 @@
-// AAAdlander Command Center - Main Application
-
+// Updated Imports to match your perfectly organized folder structure
 import { Measurement } from "./models/Measurement.js";
 import { sendCommand } from "./services/apiService.js";
 import { connectSocket } from "./services/socketService.js";
+import "./components/ActionButton.js";
+import "./components/StatusCard.js";
 import "./components/Dashboard.js";
 
-// Configuration
-// Local example: "ws://localhost:8080"
-// Azure/production example: "wss://your-websocket-url"
 const WEBSOCKET_URL = "";
 const REQUIRED_MEASUREMENTS = 5;
 const PLANT_DISTANCE_CM = 20;
 
-// DOM Elements
 let dashboard = null;
 let btnStart = null;
 let btnPlant = null;
 let btnReset = null;
 
-// Application State
 let appState = {
     measurements: [],
     socketConnection: null,
@@ -44,7 +40,6 @@ function init() {
     btnReset.addEventListener("click", resetDashboard);
 
     updateDashboard();
-
     console.log("[App] Initialized successfully.");
 }
 
@@ -69,9 +64,7 @@ function startMeasurement() {
 
     appState.socketConnection = connectSocket({
         url: WEBSOCKET_URL,
-
         onDataReceived: handleIncomingMeasurement,
-
         onStatusChange: status => {
             appState.connectionStatus = status;
             appState.lastUpdateTime = new Date();
@@ -98,7 +91,6 @@ function handleIncomingMeasurement(rawData) {
     }
 
     appState.lastUpdateTime = new Date();
-
     updateDashboard();
 
     if (appState.measurements.length >= REQUIRED_MEASUREMENTS && appState.isRunning) {
@@ -118,33 +110,17 @@ function handleIncomingMeasurement(rawData) {
 
 function calculateAverageDistance() {
     const validMeasurements = appState.measurements.filter(item => item.isValid);
-
-    if (validMeasurements.length === 0) {
-        return null;
-    }
-
+    if (validMeasurements.length === 0) return null;
     const total = validMeasurements.reduce((sum, item) => sum + item.distance, 0);
-
     return total / validMeasurements.length;
 }
 
 function checkReadyToPlant() {
-    if (appState.measurements.length < REQUIRED_MEASUREMENTS) {
-        return false;
-    }
-
+    if (appState.measurements.length < REQUIRED_MEASUREMENTS) return false;
     const validMeasurements = appState.measurements.filter(item => item.isValid);
-
-    if (validMeasurements.length < REQUIRED_MEASUREMENTS) {
-        return false;
-    }
-
+    if (validMeasurements.length < REQUIRED_MEASUREMENTS) return false;
     const averageDistance = calculateAverageDistance();
-
-    if (averageDistance === null) {
-        return false;
-    }
-
+    if (averageDistance === null) return false;
     return averageDistance <= PLANT_DISTANCE_CM;
 }
 
@@ -157,7 +133,6 @@ function plantFlag() {
             "- distance must be between 0 and 200 cm\n" +
             "- average distance must be 20 cm or less"
         );
-
         return;
     }
 
@@ -169,7 +144,6 @@ function plantFlag() {
         measurements: appState.measurements.map(item => item.toJSON())
     }).then(response => {
         recordCommand("PLANT_FLAG", response.success);
-
         if (response.success) {
             alert("Plant command sent successfully.");
         } else {
@@ -206,24 +180,19 @@ function resetMeasurementsOnly() {
         appState.socketConnection.close();
         appState.socketConnection = null;
     }
-
     appState.measurements = [];
     appState.lastUpdateTime = new Date();
-
     updateDashboard();
 }
 
 function recordCommand(commandName, success) {
     appState.lastCommand = `${commandName} (${success ? "success" : "failed"})`;
     appState.lastUpdateTime = new Date();
-
     updateDashboard();
 }
 
 function updateDashboard() {
-    if (!dashboard) {
-        return;
-    }
+    if (!dashboard) return;
 
     dashboard.updateState({
         measurements: [...appState.measurements],

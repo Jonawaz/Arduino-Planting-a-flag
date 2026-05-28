@@ -1,13 +1,8 @@
-// Dashboard Web Component
-// This file contains only UI rendering logic.
-// All styling is handled in style.css.
-
 class Dashboard extends HTMLElement {
     constructor() {
         super();
-
         this.state = {
-            connectionStatus: "Not started",
+            connectionStatus: "disconnected",
             currentMeasurement: null,
             measurements: [],
             averageDistance: null,
@@ -22,146 +17,132 @@ class Dashboard extends HTMLElement {
     }
 
     updateState(newState) {
-        this.state = {
-            ...this.state,
-            ...newState
-        };
-
+        this.state = { ...this.state, ...newState };
         this.render();
     }
 
     render() {
         const validCount = this.state.measurements.filter(item => item.isValid).length;
-
-        const currentDistance = this.state.currentMeasurement
-            ? this.state.currentMeasurement.distanceText
-            : "-- cm";
-
-        const currentStatus = this.state.currentMeasurement
-            ? this.state.currentMeasurement.status
-            : "Waiting";
-
+        const currentDistance = this.state.currentMeasurement ? this.state.currentMeasurement.distanceText : "-- cm";
+        const currentStatus = this.state.currentMeasurement ? this.state.currentMeasurement.status : "Waiting";
         const averageDistanceText = this.getAverageDistanceText();
+        
         const readyText = this.state.isReadyToPlant ? "Ready to Plant" : "Not Ready";
-        const readyClass = this.state.isReadyToPlant ? "ready" : "not-ready";
-        const connectionClass = this.getConnectionClass(this.state.connectionStatus);
+        const readyHighlight = this.state.isReadyToPlant ? "success" : "danger";
 
         this.innerHTML = `
+            <style>
+                .dashboard-panel {
+                    width: 100%;
+                    margin-bottom: 2rem;
+                }
+                
+                /* 3x2 Grid for the 6 dynamic cards */
+                .status-grid {
+                    display: grid;
+                    grid-template-columns: repeat(3, 1fr);
+                    gap: 1.5rem;
+                    margin-bottom: 2rem;
+                }
+
+                /* Table Section */
+                .table-card {
+                    background: rgba(255, 255, 255, 0.03);
+                    border: 0.0625rem solid rgba(255, 255, 255, 0.08);
+                    border-radius: 1rem;
+                    padding: 1.5rem;
+                    width: 100%;
+                    overflow-x: auto;
+                }
+
+                .table-header {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    margin-bottom: 1.5rem;
+                }
+
+                .table-header h3 {
+                    color: #f3f4f6;
+                    font-size: 1.2rem;
+                    font-weight: 600;
+                    margin: 0;
+                }
+
+                .mini-badge {
+                    background: rgba(255, 255, 255, 0.1);
+                    color: #f3f4f6;
+                    padding: 0.4rem 0.8rem;
+                    border-radius: 1rem;
+                    font-size: 0.8rem;
+                    font-weight: bold;
+                }
+
+                table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    text-align: left;
+                }
+
+                th, td {
+                    padding: 1rem;
+                    border-bottom: 0.0625rem solid rgba(255, 255, 255, 0.05);
+                    color: #9ca3af;
+                    font-size: 0.9rem;
+                }
+
+                th {
+                    color: #f3f4f6;
+                    font-weight: 600;
+                    text-transform: uppercase;
+                    letter-spacing: 0.05rem;
+                    font-size: 0.8rem;
+                }
+
+                tr:last-child td { border-bottom: none; }
+                
+                .valid-text { color: #4ade80; font-weight: bold; }
+                .invalid-text { color: #f87171; font-weight: bold; }
+                .empty-row { text-align: center; color: #6b7280; font-style: italic; }
+
+                /* Responsive Grid */
+                @media (max-width: 60rem) {
+                    .status-grid { grid-template-columns: repeat(2, 1fr); }
+                }
+                @media (max-width: 40rem) {
+                    .status-grid { grid-template-columns: 1fr; }
+                }
+            </style>
+
             <section class="dashboard-panel">
-                <div class="dashboard-heading">
-                    <div>
-                        <p class="section-label">Live Telemetry</p>
-                        <h2>Module Status Overview</h2>
-                    </div>
-
-                    <div class="status-pill ${connectionClass}">
-                        <span class="status-dot"></span>
-                        ${this.escapeText(this.state.connectionStatus)}
-                    </div>
-                </div>
-
                 <div class="status-grid">
-                    <article class="status-card highlight-card">
-                        <p class="card-label">Current Distance</p>
-                        <p class="card-value big-value">${currentDistance}</p>
-                        <p class="card-text">Latest sensor value</p>
-                    </article>
-
-                    <article class="status-card">
-                        <p class="card-label">Average Distance</p>
-                        <p class="card-value">${averageDistanceText}</p>
-                        <p class="card-text">Target: 20 cm or less</p>
-                    </article>
-
-                    <article class="status-card ${readyClass}">
-                        <p class="card-label">Plant Permission</p>
-                        <p class="card-value">${readyText}</p>
-                        <p class="card-text">${validCount}/5 valid measurements</p>
-                    </article>
-
-                    <article class="status-card">
-                        <p class="card-label">Measurement Status</p>
-                        <p class="card-value">${this.escapeText(currentStatus)}</p>
-                        <p class="card-text">Current measurement state</p>
-                    </article>
-
-                    <article class="status-card">
-                        <p class="card-label">Last Command</p>
-                        <p class="card-value small-value">${this.escapeText(this.state.lastCommand)}</p>
-                        <p class="card-text">Latest command action</p>
-                    </article>
-
-                    <article class="status-card">
-                        <p class="card-label">Last Update</p>
-                        <p class="card-value small-value">${this.getLastUpdateTime()}</p>
-                        <p class="card-text">Dashboard update time</p>
-                    </article>
-
-                    <article class="status-card">
-                        <p class="card-label">Rule</p>
-                        <p class="card-value">5 Checks</p>
-                        <p class="card-text">Only the latest 5 values are used</p>
-                    </article>
-
-                    <article class="status-card">
-                        <p class="card-label">Valid Range</p>
-                        <p class="card-value">0-200 cm</p>
-                        <p class="card-text">Invalid values are rejected</p>
-                    </article>
+                    <!-- Using your new reusable StatusCard component! -->
+                    <status-card title="Current Distance" value="${currentDistance}" text="Latest sensor value"></status-card>
+                    <status-card title="Average Distance" value="${averageDistanceText}" text="Target: 20 cm or less"></status-card>
+                    <status-card title="Plant Permission" value="${readyText}" text="${validCount}/5 valid measurements" highlight="${readyHighlight}"></status-card>
+                    <status-card title="Measurement Status" value="${this.escapeText(currentStatus)}" text="Current measurement state"></status-card>
+                    <status-card title="Last Command" value="${this.escapeText(this.state.lastCommand)}" text="Latest command action"></status-card>
+                    <status-card title="Last Update" value="${this.getLastUpdateTime()}" text="Dashboard update time"></status-card>
                 </div>
 
-                <div class="data-grid">
-                    <section class="table-card">
-                        <div class="table-header">
-                            <div>
-                                <p class="section-label">Sensor Data</p>
-                                <h3>Last 5 Measurements</h3>
-                            </div>
-
-                            <span class="mini-badge">${validCount}/5 valid</span>
-                        </div>
-
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>#</th>
-                                    <th>Distance</th>
-                                    <th>Status</th>
-                                    <th>Time</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${this.renderMeasurementRows()}
-                            </tbody>
-                        </table>
-                    </section>
-
-                    <section class="logic-card">
-                        <p class="section-label">Planting Logic</p>
-                        <h3>Decision Rules</h3>
-
-                        <div class="logic-list">
-                            <div class="logic-item">
-                                <span class="logic-dot"></span>
-                                <p>Collect five distance measurements.</p>
-                            </div>
-
-                            <div class="logic-item">
-                                <span class="logic-dot"></span>
-                                <p>Check that all measurements are valid.</p>
-                            </div>
-
-                            <div class="logic-item">
-                                <span class="logic-dot"></span>
-                                <p>Calculate the average distance.</p>
-                            </div>
-
-                            <div class="logic-item">
-                                <span class="logic-dot"></span>
-                                <p>Allow planting only when the average is 20 cm or less.</p>
-                            </div>
-                        </div>
-                    </section>
+                <div class="table-card">
+                    <div class="table-header">
+                        <h3>Last 5 Measurements</h3>
+                        <span class="mini-badge">${validCount}/5 valid</span>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Distance</th>
+                                <th>Status</th>
+                                <th>Time</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${this.renderMeasurementRows()}
+                        </tbody>
+                    </table>
                 </div>
             </section>
         `;
@@ -169,22 +150,15 @@ class Dashboard extends HTMLElement {
 
     renderMeasurementRows() {
         if (this.state.measurements.length === 0) {
-            return `
-                <tr>
-                    <td colspan="4" class="empty-row">No measurements yet. Press Start Measurement.</td>
-                </tr>
-            `;
+            return `<tr><td colspan="4" class="empty-row">No measurements yet. Press Start Measurement.</td></tr>`;
         }
-
         return this.state.measurements.map((measurement, index) => {
             const statusClass = measurement.isValid ? "valid-text" : "invalid-text";
-            const statusText = measurement.isValid ? "Valid" : "Invalid";
-
             return `
                 <tr>
                     <td>${index + 1}</td>
                     <td>${measurement.distanceText}</td>
-                    <td class="${statusClass}">${statusText}</td>
+                    <td class="${statusClass}">${measurement.isValid ? "Valid" : "Invalid"}</td>
                     <td>${measurement.timeString}</td>
                 </tr>
             `;
@@ -192,53 +166,14 @@ class Dashboard extends HTMLElement {
     }
 
     getAverageDistanceText() {
-        if (this.state.measurements.length === 0) {
-            return "-- cm";
-        }
-
-        if (!Number.isFinite(this.state.averageDistance)) {
-            return "-- cm";
-        }
-
+        if (this.state.measurements.length === 0) return "-- cm";
+        if (!Number.isFinite(this.state.averageDistance)) return "-- cm";
         return `${this.state.averageDistance.toFixed(1)} cm`;
     }
 
     getLastUpdateTime() {
-        const time = this.state.lastUpdateTime;
-
-        if (time instanceof Date) {
-            return time.toLocaleTimeString();
-        }
-
-        const parsedDate = new Date(time);
-
-        if (Number.isNaN(parsedDate.getTime())) {
-            return "--";
-        }
-
-        return parsedDate.toLocaleTimeString();
-    }
-
-    getConnectionClass(status) {
-        const value = String(status).toLowerCase();
-
-        if (value.includes("mock")) {
-            return "connection-mock";
-        }
-
-        if (value.includes("connected") || value.includes("complete")) {
-            return "connection-connected";
-        }
-
-        if (value.includes("error")) {
-            return "connection-error";
-        }
-
-        if (value.includes("disconnect") || value.includes("stopped") || value.includes("reset")) {
-            return "connection-disconnected";
-        }
-
-        return "connection-idle";
+        if (!(this.state.lastUpdateTime instanceof Date)) return "--";
+        return this.state.lastUpdateTime.toLocaleTimeString();
     }
 
     escapeText(value) {
@@ -252,5 +187,4 @@ class Dashboard extends HTMLElement {
 }
 
 customElements.define("plant-dashboard", Dashboard);
-
 export { Dashboard };

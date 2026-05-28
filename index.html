@@ -2,83 +2,57 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
     <title>AAAdlander Command Center</title>
-
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <!-- Full screen animated space background -->
-    <div class="space-loader" aria-hidden="true">
-        <div class="space-environment">
-            <div class="stars-container">
-                <div class="stars stars-near"></div>
-                <div class="stars stars-mid"></div>
-                <div class="stars stars-far"></div>
-            </div>
-
-            <div class="meteors">
-                <div class="meteor meteor-1"></div>
-                <div class="meteor meteor-2"></div>
-                <div class="meteor meteor-3"></div>
-            </div>
+    <!-- Space Background (No Astronaut) -->
+    <div class="space-background" aria-hidden="true">
+        <div class="stars-container">
+            <div class="stars stars-near"></div>
+            <div class="stars stars-mid"></div>
+        </div>
+        <div class="meteors">
+            <div class="meteor meteor-1"></div>
+            <div class="meteor meteor-2"></div>
         </div>
     </div>
 
-    <header class="main-header">
-        <div class="logo-wrapper">
-            <img src="assets/aasa-logo.png" alt="AASA logo" class="aasa-logo">
-        </div>
-
-        <div class="header-text">
-            <p class="top-label">Blok 4 · Interdisciplinair Project</p>
-            <h1>AAAdlander Command Center</h1>
-            <p class="subtitle">Module 4 - Vlag Planten</p>
-        </div>
-    </header>
-
     <main class="page-layout">
-
-        <section class="mission-card">
-            <div class="mission-text">
-                <p class="section-label">Mission Control</p>
-                <h2>Flag Planting Dashboard</h2>
-                <p>
-                    This dashboard shows live distance measurements, module status,
-                    command status and plant permission. The flag may only be planted
-                    after five valid distance measurements.
-                </p>
+        
+        <!-- Small, Clean Header -->
+        <header class="app-header glass-panel">
+            <div class="logo-wrapper">
+                <img src="assets/AASA_logo.withoutBackground.png" alt="AASA logo" class="aasa-logo">
             </div>
-
-            <div class="mission-status">
-                <span class="mission-dot"></span>
-                Azure Hosted Webapp
+            <div class="header-text">
+                <h1>AAAdlander Command Center</h1>
+                <span class="group-badge">Group 14</span>
             </div>
-        </section>
+        </header>
 
+        <!-- Dashboard Component -->
         <plant-dashboard></plant-dashboard>
 
-        <section class="controls-panel">
-            <p class="section-label">Command Panel</p>
+        <!-- Controls Panel (Using new Web Components) -->
+        <section class="controls-panel glass-panel">
             <h2>Module Commands</h2>
-
-            <div class="controls">
-                <button id="btn-start" class="btn btn-primary" type="button">Start Measurement</button>
-                <button id="btn-plant" class="btn btn-success" type="button">Plant Flag</button>
-                <button id="btn-reset" class="btn btn-danger" type="button">Reset</button>
+            <div class="controls-wrapper">
+                <action-button id="btn-start" theme="primary">Start Measurement</action-button>
+                <action-button id="btn-plant" theme="success">Plant Flag</action-button>
+                <action-button id="btn-reset" theme="danger">Reset</action-button>
             </div>
         </section>
 
     </main>
 
-    <footer class="footer">
-        <p>AAAdlander · Module 4 · Vlag Planten</p>
+    <footer class="app-footer">
+        <p>AAAdlander &copy; Group 14</p>
     </footer>
 
-    <!-- Important: because app.js is inside the js folder -->
+    <!-- Logic Scripts -->
     <script src="js/app.js" type="module"></script>
 
 </body>
