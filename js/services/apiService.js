@@ -2,11 +2,11 @@
 const API_BASE_URL = "http://145.49.127.250:1880/groep14";
 
 // Maps the command names from your app.js to the LPP query parameters expected by the satellite.
-// Update the channel numbers (e.g., digital_output_2, digital_output_3) here if your hardware wiring changes.
+// digital_output_2 acts as your measurement trigger, and digital_output_3 acts as your flag-planting trigger.
 const COMMAND_MAPPING = {
-    "START_MEASUREMENT": "digital_output_2=255", // Trigger sensor on channel 2
-    "PLANT_FLAG": "digital_output_3=255",        // Trigger servo/motor on channel 3
-    "RESET": "digital_output_2=0,digital_output_3=0" // Reset actuators to default states
+    "START_MEASUREMENT": "digital_output_2=255", // Triggers sensor trigger pin via channel 2 [5]
+    "PLANT_FLAG": "digital_output_3=255",        // Triggers flag servo/motor via channel 3 [5]
+    "RESET": "digital_output_2=0,digital_output_3=0" // Resets both actuators to default states [5]
 };
 
 export async function sendCommand(commandName, payload = {}) {
@@ -18,7 +18,7 @@ export async function sendCommand(commandName, payload = {}) {
 
     console.log("[API] Preparing command:", command);
 
-    // Mock Mode Fallback: If you empty the API_BASE_URL string, it will run mock mode offline
+    // Toggle Mock Mode: If you empty the API_BASE_URL string, it will run mock mode offline
     if (!API_BASE_URL) {
         console.log("[MOCK API] No API_BASE_URL configured. Mock command used.");
 
@@ -42,13 +42,13 @@ export async function sendCommand(commandName, payload = {}) {
         };
     }
 
-    // Assemble the clean GET downlink URL (e.g., http://145.49.127.250:1880/groep14?digital_output_2=255)
+    // Assemble the clean GET downlink URL (e.g., http://145.49.127.250:1880/groep14?digital_output_2=255) [5]
     const fullUrl = `${API_BASE_URL}?${queryParams}`;
 
     try {
         console.log(`[API] Transmitting GET request to: ${fullUrl}`);
 
-        // Downlink control commands must be executed as GET requests
+        // Downlink control commands must be executed as GET requests [5]
         const response = await fetch(fullUrl, {
             method: "GET"
         });
@@ -59,7 +59,7 @@ export async function sendCommand(commandName, payload = {}) {
             throw new Error(responseData.message || `HTTP error: ${response.status}`);
         }
 
-        // Returns success: true so your app.js's .then(response => response.success) functions correctly
+        // Returns success: true so your app.js's .then(response => response.success) functions correctly [5]
         return {
             success: true,
             mode: "real-api",
