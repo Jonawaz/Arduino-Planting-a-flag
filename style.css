@@ -1,5 +1,5 @@
 /* =========================================
-   RESET & BASE VARIABLES (Only % and rem)
+   RESET & BASE VARIABLES (Only % and rem for better responsiveness)
    ========================================= */
 * {
     margin: 0;
@@ -32,7 +32,7 @@ body {
 }
 
 /* =========================================
-   SPACE BACKGROUND (No Astronaut)
+   SPACE BACKGROUND 
    ========================================= */
 .space-background {
     position: fixed;
@@ -120,7 +120,7 @@ body {
 }
 
 /* =========================================
-   LAYOUT & GLASSMORPHISM (Grey Theme)
+   LAYOUT & GLASSMORPHISM 
    ========================================= */
 .page-layout {
     width: 100%;
@@ -142,7 +142,7 @@ body {
 }
 
 /* =========================================
-   HEADER (Small & Clean)
+   HEADER 
    ========================================= */
 .app-header {
     display: flex;
