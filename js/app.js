@@ -6,7 +6,7 @@ import "./components/ActionButton.js";
 import "./components/StatusCard.js";
 import "./components/Dashboard.js";
 
-const WEBSOCKET_URL = "";
+const WEBSOCKET_URL = "ws://145.49.127.250:1880/ws/groep14";
 const REQUIRED_MEASUREMENTS = 5;
 const PLANT_DISTANCE_CM = 20;
 
@@ -76,12 +76,25 @@ function startMeasurement() {
 }
 
 function handleIncomingMeasurement(rawData) {
+    // 1. Extract distance: Check for Group 14's live LPP format (e.g., distance_1) 
+    // and fallback to mock format if testing offline.
+    const extractedDistance = rawData.distance_1 !== undefined 
+        ? rawData.distance_1 
+        : rawData.distance;
+
+    // 2. Ignore invalid or empty packets
+    if (extractedDistance === undefined || extractedDistance === null) {
+        console.warn("[App] Received live payload without distance data:", rawData);
+        return;
+    }
+
+    // 3. Construct the Measurement instance with safe fallbacks
     const measurement = new Measurement({
-        id: rawData.id,
-        distance: rawData.distance,
+        id: rawData.id || `m_${Date.now()}`, // Generate an ID if the live feed lacks one
+        distance: Number(extractedDistance),
         status: rawData.status || "valid",
         timestamp: rawData.timestamp ? new Date(rawData.timestamp) : new Date(),
-        source: rawData.source || "sensor"
+        source: rawData.source || "live-sensor"
     });
 
     appState.measurements.push(measurement);

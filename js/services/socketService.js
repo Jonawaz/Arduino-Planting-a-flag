@@ -4,7 +4,7 @@ let mockInterval = null;
 export function connectSocket({ url, onDataReceived, onStatusChange }) {
     let connection = null;
     let isClosed = false;
-
+// test mock data generator 
     function generateMockData() {
         // Generate random distance between 12 and 32 cm
         const distance = Math.random() * (32 - 12) + 12;
@@ -21,7 +21,7 @@ export function connectSocket({ url, onDataReceived, onStatusChange }) {
 
     function connect() {
         if (!url || url === "") {
-            // Use mock data
+            // Use mock data (test)
             console.log("[Socket] No WebSocket URL configured. Using mock data.");
             onStatusChange('connected');
             
