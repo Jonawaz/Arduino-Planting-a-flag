@@ -2,13 +2,12 @@
 const API_BASE_URL = "http://145.49.127.250:1880/groep14";
 
 // Maps the command names from your app.js to the LPP query parameters expected by the satellite.
-// digital_output_2 acts as your measurement trigger, and digital_output_3 acts as your flag-planting trigger.
 const COMMAND_MAPPING = {
-    "START_MEASUREMENT": "digital_output_2=255", // Triggers sensor trigger pin via channel 2 [5]
-    "PLANT_FLAG": "digital_output_3=255",        // Triggers flag servo/motor via channel 3 [5]
-    "RESET": "digital_output_2=0,digital_output_3=0" , // Resets both actuators to default states [5]
-    "LED_ON": "digital_output_1=255",  // Sends 0xFF on Channel 1 to turn LED ON [5]
-    "LED_OFF": "digital_output_1=127",   // Sends 0x7F on Channel 1 to turn LED OFF [5] 
+    "START_MEASUREMENT": "digital_output_2=255", 
+    "PLANT_FLAG": "digital_output_3=255",        
+    "RESET": "digital_output_2=0,digital_output_3=0", 
+    "LED_ON": "digital_output_1=255",  
+    "LED_OFF": "digital_output_1=127"   
 };
 
 export async function sendCommand(commandName, payload = {}) {
@@ -48,11 +47,14 @@ export async function sendCommand(commandName, payload = {}) {
     const fullUrl = `${API_BASE_URL}?${queryParams}`;
 
     try {
-        console.log(`[API] Transmitting GET request to: ${fullUrl}`);
+        console.log(`[API] Transmitting POST request to: ${fullUrl}`);
 
-        // Downlink control commands must be executed as GET requests [5]
+        // UPDATED: Downlink control commands must be executed as POST requests [5]
         const response = await fetch(fullUrl, {
-            method: "GET"
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            }
         });
 
         const responseData = await response.json().catch(() => ({}));

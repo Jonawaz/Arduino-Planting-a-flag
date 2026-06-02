@@ -38,12 +38,13 @@ function init() {
     btnLedOn = document.getElementById("btn-led-on");
     btnLedOff = document.getElementById("btn-led-off");
 
-    if (!dashboard || !btnStart || !btnPlant || !btnReset) {
-        console.error("[App] Required DOM elements not found.");
+    // 2. Updated safety check to prevent null errors [5]:
+    if (!dashboard || !btnStart || !btnPlant || !btnReset || !btnLedOn || !btnLedOff) {
+        console.error("[App] Required DOM elements or LED buttons not found.");
         return;
     }
 
-    // 2. Bind click listeners:
+    // 3. Bind click listeners:
     btnLedOn.addEventListener("click", turnLedOn);
     btnLedOff.addEventListener("click", turnLedOff);
 
@@ -246,7 +247,7 @@ function turnLedOn() {
     console.log("[App] Sending LED ON command...");
     appState.lastCommand = "LED_ON";
     appState.lastUpdateTime = new Date();
-    
+
     sendCommand("LED_ON", {}).then(response => {
         recordCommand("LED_ON", response.success);
     });
@@ -256,7 +257,7 @@ function turnLedOff() {
     console.log("[App] Sending LED OFF command...");
     appState.lastCommand = "LED_OFF";
     appState.lastUpdateTime = new Date();
-    
+
     sendCommand("LED_OFF", {}).then(response => {
         recordCommand("LED_OFF", response.success);
     });
