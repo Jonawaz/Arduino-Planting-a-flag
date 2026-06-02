@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AAAdlander Command Center</title>
     <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
 
     <!-- Space Background -->
@@ -21,7 +23,7 @@
     </div>
 
     <main class="page-layout">
-        
+
         <!-- Small, Clean Header -->
         <header class="app-header glass-panel">
             <div class="logo-wrapper">
@@ -44,6 +46,9 @@
                 <action-button id="btn-plant" theme="success">Plant Flag</action-button>
                 <action-button id="btn-reset" theme="danger">Reset</action-button>
             </div>
+            <!-- Add these buttons to test your Arduino LED -->
+            <button id="btn-led-on" class="btn">LED ON</button>
+            <button id="btn-led-off" class="btn">LED OFF</button>
         </section>
 
     </main>
@@ -56,4 +61,5 @@
     <script src="js/app.js" type="module"></script>
 
 </body>
+
 </html>

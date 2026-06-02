@@ -10,6 +10,10 @@ const WEBSOCKET_URL = "ws://145.49.127.250:1880/ws/groep14";
 const REQUIRED_MEASUREMENTS = 5;
 const PLANT_DISTANCE_CM = 20;
 
+// LED Test buttons 
+let btnLedOn = null;
+let btnLedOff = null;
+
 let dashboard = null;
 let btnStart = null;
 let btnPlant = null;
@@ -30,10 +34,18 @@ function init() {
     btnPlant = document.getElementById("btn-plant");
     btnReset = document.getElementById("btn-reset");
 
+    // 1. Locate the new LED buttons:
+    btnLedOn = document.getElementById("btn-led-on");
+    btnLedOff = document.getElementById("btn-led-off");
+
     if (!dashboard || !btnStart || !btnPlant || !btnReset) {
         console.error("[App] Required DOM elements not found.");
         return;
     }
+
+    // 2. Bind click listeners:
+    btnLedOn.addEventListener("click", turnLedOn);
+    btnLedOff.addEventListener("click", turnLedOff);
 
     btnStart.addEventListener("click", startMeasurement);
     btnPlant.addEventListener("click", plantFlag);
@@ -78,8 +90,8 @@ function startMeasurement() {
 function handleIncomingMeasurement(rawData) {
     // 1. Extract distance: Check for Group 14's live LPP format (e.g., distance_1) 
     // and fallback to mock format if testing offline.
-    const extractedDistance = rawData.distance_1 !== undefined 
-        ? rawData.distance_1 
+    const extractedDistance = rawData.distance_1 !== undefined
+        ? rawData.distance_1
         : rawData.distance;
 
     // 2. Ignore invalid or empty packets
@@ -227,3 +239,25 @@ if (document.readyState === "loading") {
 }
 
 console.log("[App] Module loaded.");
+
+
+// led control functions for testing
+function turnLedOn() {
+    console.log("[App] Sending LED ON command...");
+    appState.lastCommand = "LED_ON";
+    appState.lastUpdateTime = new Date();
+    
+    sendCommand("LED_ON", {}).then(response => {
+        recordCommand("LED_ON", response.success);
+    });
+}
+
+function turnLedOff() {
+    console.log("[App] Sending LED OFF command...");
+    appState.lastCommand = "LED_OFF";
+    appState.lastUpdateTime = new Date();
+    
+    sendCommand("LED_OFF", {}).then(response => {
+        recordCommand("LED_OFF", response.success);
+    });
+}

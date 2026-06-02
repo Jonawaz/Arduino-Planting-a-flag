@@ -6,7 +6,9 @@ const API_BASE_URL = "http://145.49.127.250:1880/groep14";
 const COMMAND_MAPPING = {
     "START_MEASUREMENT": "digital_output_2=255", // Triggers sensor trigger pin via channel 2 [5]
     "PLANT_FLAG": "digital_output_3=255",        // Triggers flag servo/motor via channel 3 [5]
-    "RESET": "digital_output_2=0,digital_output_3=0" // Resets both actuators to default states [5]
+    "RESET": "digital_output_2=0,digital_output_3=0" , // Resets both actuators to default states [5]
+    "LED_ON": "digital_output_1=255",  // Sends 0xFF on Channel 1 to turn LED ON [5]
+    "LED_OFF": "digital_output_1=127",   // Sends 0x7F on Channel 1 to turn LED OFF [5] 
 };
 
 export async function sendCommand(commandName, payload = {}) {
