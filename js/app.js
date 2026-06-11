@@ -89,25 +89,32 @@ function startMeasurement() {
 }
 
 function handleIncomingMeasurement(rawData) {
-    // 1. Extract distance: Check for Group 14's live LPP format (e.g., distance_1) 
-    // and fallback to mock format if testing offline.
-    const extractedDistance = rawData.distance_1 !== undefined
-        ? rawData.distance_1
-        : rawData.distance;
+    console.log("[App] Raw incoming data:", rawData);
 
-    // 2. Ignore invalid or empty packets
+    const data = rawData.payload ? rawData.payload : rawData;
+
+    let extractedDistance =
+        data.proximity_1 !== undefined ? data.proximity_1 :
+        data.distance_1 !== undefined ? data.distance_1 :
+        data.distance !== undefined ? data.distance :
+        data.distance_130 !== undefined ? data.distance_130 :
+        data.distanceMm !== undefined ? data.distanceMm :
+        data.distance_mm !== undefined ? data.distance_mm :
+        undefined;
+
     if (extractedDistance === undefined || extractedDistance === null) {
-        console.warn("[App] Received live payload without distance data:", rawData);
+        console.warn("[App] Received payload without distance/proximity data:", rawData);
         return;
     }
 
-    // 3. Construct the Measurement instance with safe fallbacks
+    extractedDistance = Number(extractedDistance);
+
     const measurement = new Measurement({
-        id: rawData.id || `m_${Date.now()}`, // Generate an ID if the live feed lacks one
-        distance: Number(extractedDistance),
-        status: rawData.status || "valid",
-        timestamp: rawData.timestamp ? new Date(rawData.timestamp) : new Date(),
-        source: rawData.source || "live-sensor"
+        id: data.id || `m_${Date.now()}`,
+        distance: extractedDistance,
+        status: data.status || data.status_1 || "valid",
+        timestamp: data.timestamp ? new Date(data.timestamp) : new Date(),
+        source: data.source || "live-sensor"
     });
 
     appState.measurements.push(measurement);
@@ -122,12 +129,6 @@ function handleIncomingMeasurement(rawData) {
     if (appState.measurements.length >= REQUIRED_MEASUREMENTS && appState.isRunning) {
         appState.isRunning = false;
         btnStart.disabled = false;
-
-        if (appState.socketConnection) {
-            appState.socketConnection.close();
-            appState.socketConnection = null;
-        }
-
         appState.connectionStatus = "Measurement complete";
         appState.lastUpdateTime = new Date();
         updateDashboard();
