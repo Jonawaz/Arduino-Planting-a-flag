@@ -1,4 +1,4 @@
-//  Imports
+// Imports
 import { Measurement } from "./models/Measurement.js";
 import { sendCommand } from "./services/apiService.js";
 import { connectSocket } from "./services/socketService.js";
@@ -9,10 +9,6 @@ import "./components/Dashboard.js";
 const WEBSOCKET_URL = "ws://145.49.127.250:1880/ws/groep14";
 const REQUIRED_MEASUREMENTS = 5;
 const PLANT_DISTANCE_CM = 20;
-
-// LED Test buttons 
-let btnLedOn = null;
-let btnLedOff = null;
 
 let dashboard = null;
 let btnStart = null;
@@ -28,51 +24,36 @@ let appState = {
     lastUpdateTime: new Date()
 };
 
+// Prevent duplicate WebSocket messages from being counted twice
+let lastMessageSignature = null;
+let lastMessageTime = 0;
+const DUPLICATE_IGNORE_MS = 700;
+
 function init() {
     dashboard = document.querySelector("plant-dashboard");
     btnStart = document.getElementById("btn-start");
     btnPlant = document.getElementById("btn-plant");
     btnReset = document.getElementById("btn-reset");
 
-    // 1. Locate the new LED buttons:
-    btnLedOn = document.getElementById("btn-led-on");
-    btnLedOff = document.getElementById("btn-led-off");
-
-    // 2. Updated safety check to prevent null errors [5]:
-    if (!dashboard || !btnStart || !btnPlant || !btnReset || !btnLedOn || !btnLedOff) {
-        console.error("[App] Required DOM elements or LED buttons not found.");
+    if (!dashboard || !btnStart || !btnPlant || !btnReset) {
+        console.error("[App] Required DOM elements not found.");
         return;
     }
-
-    // 3. Bind click listeners:
-    btnLedOn.addEventListener("click", turnLedOn);
-    btnLedOff.addEventListener("click", turnLedOff);
 
     btnStart.addEventListener("click", startMeasurement);
     btnPlant.addEventListener("click", plantFlag);
     btnReset.addEventListener("click", resetDashboard);
 
     updateDashboard();
+    startLiveSocket();
+
     console.log("[App] Initialized successfully.");
 }
 
-function startMeasurement() {
-    resetMeasurementsOnly();
-
-    appState.isRunning = true;
-    appState.lastCommand = "START_MEASUREMENT";
-    appState.connectionStatus = "Starting measurement";
-    appState.lastUpdateTime = new Date();
-
-    btnStart.disabled = true;
-
-    sendCommand("START_MEASUREMENT", {}).then(response => {
-        recordCommand("START_MEASUREMENT", response.success);
-    });
-
+function startLiveSocket() {
     if (appState.socketConnection) {
-        appState.socketConnection.close();
-        appState.socketConnection = null;
+        console.log("[App] WebSocket already active. No second connection opened.");
+        return;
     }
 
     appState.socketConnection = connectSocket({
@@ -84,37 +65,70 @@ function startMeasurement() {
             updateDashboard();
         }
     });
+}
+
+function startMeasurement() {
+    resetMeasurementsOnly();
+
+    appState.isRunning = true;
+    appState.lastCommand = "START_MEASUREMENT";
+    appState.connectionStatus = "Measurement started";
+    appState.lastUpdateTime = new Date();
+
+    lastMessageSignature = null;
+    lastMessageTime = 0;
+
+    btnStart.disabled = true;
+
+    startLiveSocket();
+
+    sendCommand("START_MEASUREMENT", {}).then(response => {
+        recordCommand("START_MEASUREMENT", response.success);
+    });
 
     updateDashboard();
 }
 
 function handleIncomingMeasurement(rawData) {
-    console.log("[App] Raw incoming data:", rawData);
+    console.log("[App] Incoming measurement:", rawData);
 
-    const data = rawData.payload ? rawData.payload : rawData;
-
-    let extractedDistance =
-        data.proximity_1 !== undefined ? data.proximity_1 :
-        data.distance_1 !== undefined ? data.distance_1 :
-        data.distance !== undefined ? data.distance :
-        data.distance_130 !== undefined ? data.distance_130 :
-        data.distanceMm !== undefined ? data.distanceMm :
-        data.distance_mm !== undefined ? data.distance_mm :
-        undefined;
-
-    if (extractedDistance === undefined || extractedDistance === null) {
-        console.warn("[App] Received payload without distance/proximity data:", rawData);
+    // Only accept measurements during an active measurement round
+    if (!appState.isRunning) {
+        console.log("[App] Measurement ignored because no measurement round is active.");
         return;
     }
 
-    extractedDistance = Number(extractedDistance);
+    const extractedDistance = Number(rawData.distance);
+
+    if (
+        extractedDistance === undefined ||
+        extractedDistance === null ||
+        Number.isNaN(extractedDistance)
+    ) {
+        console.warn("[App] Received payload without usable distance data:", rawData);
+        return;
+    }
+
+    const now = Date.now();
+    const messageSignature = `${extractedDistance}`;
+
+    if (
+        messageSignature === lastMessageSignature &&
+        now - lastMessageTime < DUPLICATE_IGNORE_MS
+    ) {
+        console.warn("[App] Duplicate WebSocket message ignored:", extractedDistance);
+        return;
+    }
+
+    lastMessageSignature = messageSignature;
+    lastMessageTime = now;
 
     const measurement = new Measurement({
-        id: data.id || `m_${Date.now()}`,
+        id: rawData.id || `m_${Date.now()}`,
         distance: extractedDistance,
-        status: data.status || data.status_1 || "valid",
-        timestamp: data.timestamp ? new Date(data.timestamp) : new Date(),
-        source: data.source || "live-sensor"
+        status: rawData.status || "valid",
+        timestamp: rawData.timestamp ? new Date(rawData.timestamp) : new Date(),
+        source: rawData.source || "live-sensor"
     });
 
     appState.measurements.push(measurement);
@@ -126,7 +140,7 @@ function handleIncomingMeasurement(rawData) {
     appState.lastUpdateTime = new Date();
     updateDashboard();
 
-    if (appState.measurements.length >= REQUIRED_MEASUREMENTS && appState.isRunning) {
+    if (appState.measurements.length >= REQUIRED_MEASUREMENTS) {
         appState.isRunning = false;
         btnStart.disabled = false;
         appState.connectionStatus = "Measurement complete";
@@ -137,17 +151,32 @@ function handleIncomingMeasurement(rawData) {
 
 function calculateAverageDistance() {
     const validMeasurements = appState.measurements.filter(item => item.isValid);
-    if (validMeasurements.length === 0) return null;
+
+    if (validMeasurements.length === 0) {
+        return null;
+    }
+
     const total = validMeasurements.reduce((sum, item) => sum + item.distance, 0);
     return total / validMeasurements.length;
 }
 
 function checkReadyToPlant() {
-    if (appState.measurements.length < REQUIRED_MEASUREMENTS) return false;
+    if (appState.measurements.length < REQUIRED_MEASUREMENTS) {
+        return false;
+    }
+
     const validMeasurements = appState.measurements.filter(item => item.isValid);
-    if (validMeasurements.length < REQUIRED_MEASUREMENTS) return false;
+
+    if (validMeasurements.length < REQUIRED_MEASUREMENTS) {
+        return false;
+    }
+
     const averageDistance = calculateAverageDistance();
-    if (averageDistance === null) return false;
+
+    if (averageDistance === null) {
+        return false;
+    }
+
     return averageDistance <= PLANT_DISTANCE_CM;
 }
 
@@ -171,6 +200,7 @@ function plantFlag() {
         measurements: appState.measurements.map(item => item.toJSON())
     }).then(response => {
         recordCommand("PLANT_FLAG", response.success);
+
         if (response.success) {
             alert("Plant command sent successfully.");
         } else {
@@ -182,16 +212,14 @@ function plantFlag() {
 }
 
 function resetDashboard() {
-    if (appState.socketConnection) {
-        appState.socketConnection.close();
-        appState.socketConnection = null;
-    }
-
     appState.measurements = [];
     appState.isRunning = false;
     appState.connectionStatus = "Reset";
     appState.lastCommand = "RESET";
     appState.lastUpdateTime = new Date();
+
+    lastMessageSignature = null;
+    lastMessageTime = 0;
 
     btnStart.disabled = false;
 
@@ -203,12 +231,12 @@ function resetDashboard() {
 }
 
 function resetMeasurementsOnly() {
-    if (appState.socketConnection) {
-        appState.socketConnection.close();
-        appState.socketConnection = null;
-    }
     appState.measurements = [];
     appState.lastUpdateTime = new Date();
+
+    lastMessageSignature = null;
+    lastMessageTime = 0;
+
     updateDashboard();
 }
 
@@ -219,7 +247,9 @@ function recordCommand(commandName, success) {
 }
 
 function updateDashboard() {
-    if (!dashboard) return;
+    if (!dashboard) {
+        return;
+    }
 
     dashboard.updateState({
         measurements: [...appState.measurements],
@@ -241,25 +271,3 @@ if (document.readyState === "loading") {
 }
 
 console.log("[App] Module loaded.");
-
-
-// led control functions for testing
-function turnLedOn() {
-    console.log("[App] Sending LED ON command...");
-    appState.lastCommand = "LED_ON";
-    appState.lastUpdateTime = new Date();
-
-    sendCommand("LED_ON", {}).then(response => {
-        recordCommand("LED_ON", response.success);
-    });
-}
-
-function turnLedOff() {
-    console.log("[App] Sending LED OFF command...");
-    appState.lastCommand = "LED_OFF";
-    appState.lastUpdateTime = new Date();
-
-    sendCommand("LED_OFF", {}).then(response => {
-        recordCommand("LED_OFF", response.success);
-    });
-}

@@ -1,17 +1,17 @@
-// Socket Service for WebSocket or Mock Data
-let mockInterval = null;
+// Socket Service for real WebSocket data from Node-RED
 
 function normalizeIncomingData(data) {
     let distance = null;
     let status = "valid";
 
-    // Node-RED / AAAdlander format
+    // Node-RED / AAAdlander format:
+    // proximity_1 is received in millimeters.
+    // Example: proximity_1: 50 means 5 cm.
     if (data.proximity_1 !== undefined) {
-        // Node-RED sends proximity_1 in millimeters, so convert to centimeters
         distance = Number(data.proximity_1) / 10;
     }
 
-    // Other possible formats
+    // Fallback formats, in case Node-RED sends another name later.
     else if (data.distance_1 !== undefined) {
         distance = Number(data.distance_1);
     }
@@ -25,19 +25,11 @@ function normalizeIncomingData(data) {
     }
 
     else if (data.distanceMm !== undefined) {
-        distance = Number(data.distanceMm);
-
-        if (distance > 200) {
-            distance = distance / 10;
-        }
+        distance = Number(data.distanceMm) / 10;
     }
 
     else if (data.distance_mm !== undefined) {
-        distance = Number(data.distance_mm);
-
-        if (distance > 200) {
-            distance = distance / 10;
-        }
+        distance = Number(data.distance_mm) / 10;
     }
 
     if (data.status !== undefined) {
@@ -60,92 +52,70 @@ export function connectSocket({ url, onDataReceived, onStatusChange }) {
     let connection = null;
     let isClosed = false;
 
-    function generateMockData() {
-        const distance = Math.random() * (32 - 12) + 12;
+    if (!url || url === "") {
+        console.error("[Socket] No WebSocket URL configured.");
+        onStatusChange("error");
 
-        const measurement = {
-            id: Date.now(),
-            distance: distance,
-            status: "valid",
-            timestamp: new Date().toISOString(),
-            source: "mock"
+        return {
+            close() {
+                isClosed = true;
+                onStatusChange("disconnected");
+            }
+        };
+    }
+
+    try {
+        console.log("[Socket] Connecting to:", url);
+        connection = new WebSocket(url);
+
+        connection.onopen = () => {
+            console.log("[Socket] Connected");
+            onStatusChange("connected");
         };
 
-        console.log("[Socket] Mock data:", measurement);
-        onDataReceived(measurement);
-    }
+        connection.onmessage = (event) => {
+            try {
+                console.log("[Socket] Raw message:", event.data);
 
-    function connect() {
-        if (!url || url === "") {
-            console.log("[Socket] No WebSocket URL configured. Using mock data.");
-            onStatusChange("connected");
+                const data = JSON.parse(event.data);
+                console.log("[Socket] Parsed message:", data);
 
-            mockInterval = setInterval(() => {
-                if (!isClosed) {
-                    generateMockData();
+                const measurement = normalizeIncomingData(data);
+                console.log("[Socket] Normalized measurement:", measurement);
+
+                if (measurement.distance !== null && !Number.isNaN(measurement.distance)) {
+                    onDataReceived(measurement);
+                } else {
+                    console.warn("[Socket] No usable distance found in message:", data);
                 }
-            }, 1500);
 
-            return;
-        }
+            } catch (error) {
+                console.error("[Socket] Error parsing message:", error);
+                console.error("[Socket] Original message:", event.data);
+            }
+        };
 
-        try {
-            console.log("[Socket] Connecting to:", url);
-            connection = new WebSocket(url);
-
-            connection.onopen = () => {
-                console.log("[Socket] Connected");
-                onStatusChange("connected");
-            };
-
-            connection.onmessage = (event) => {
-                try {
-                    console.log("[Socket] Raw message:", event.data);
-
-                    const data = JSON.parse(event.data);
-                    console.log("[Socket] Parsed message:", data);
-
-                    const measurement = normalizeIncomingData(data);
-                    console.log("[Socket] Normalized measurement:", measurement);
-
-                    if (measurement.distance !== null && !Number.isNaN(measurement.distance)) {
-                        onDataReceived(measurement);
-                    } else {
-                        console.warn("[Socket] No usable distance found in message:", data);
-                    }
-
-                } catch (e) {
-                    console.error("[Socket] Error parsing message:", e);
-                    console.error("[Socket] Original message:", event.data);
-                }
-            };
-
-            connection.onerror = (error) => {
-                console.error("[Socket] Error:", error);
-                onStatusChange("error");
-            };
-
-            connection.onclose = () => {
-                console.log("[Socket] Disconnected");
-                onStatusChange("disconnected");
-            };
-
-        } catch (error) {
-            console.error("[Socket] Connection error:", error);
+        connection.onerror = (error) => {
+            console.error("[Socket] Error:", error);
             onStatusChange("error");
-        }
-    }
+        };
 
-    connect();
+        connection.onclose = () => {
+            console.log("[Socket] Disconnected");
+
+            if (!isClosed) {
+                onStatusChange("disconnected");
+            }
+        };
+
+    } catch (error) {
+        console.error("[Socket] Connection error:", error);
+        onStatusChange("error");
+    }
 
     return {
         close() {
             isClosed = true;
-
-            if (mockInterval) {
-                clearInterval(mockInterval);
-                mockInterval = null;
-            }
 
             if (connection) {
                 connection.close();
